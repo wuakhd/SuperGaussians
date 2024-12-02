@@ -2,7 +2,7 @@
 
 
 ![Teaser image](assets/teaser.png)
-
+[[Project]](https://ruixu.me/html/SuperGaussians/index.html) [[Arxiv]](http://arxiv.org/abs/2411.18966)
 Gaussian Splattings demonstrate impressive results in multi-view reconstruction based on Gaussian explicit representations. However, the current Gaussian primitives only have a single view-dependent color and an opacity to represent the appearance and geometry of the scene, resulting in a non-compact representation. In this paper, we introduce a new method called SuperGaussians that utilizes spatially varying colors and opacity in a single Gaussian primitive to improve its representation ability. We have implemented bilinear interpolation, movable kernels, and even tiny neural networks as spatially varying functions. Quantitative and qualitative experimental results demonstrate that all three functions outperform the baseline, with the best movable kernels achieving superior novel view synthesis performance on multiple datasets, highlighting the strong potential of spatially varying functions. Our code will be available upon acceptance.
 
 
