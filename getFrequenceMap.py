@@ -42,8 +42,8 @@ def circle_filter_high_f(fshift, radius_ratio):
     # 1, 生成圆形过滤器, 圆内值1, 其他部分为0的过滤器, 过滤
     template = np.zeros(fshift.shape, np.uint8)
     crow, ccol = int(fshift.shape[0] / 2), int(fshift.shape[1] / 2)  # 圆心
-    radius = int(radius_ratio * img.shape[0] / 2)
-    if len(img.shape) == 3:
+    radius = int(radius_ratio * fshift.shape[0] / 2)
+    if len(fshift.shape) == 3:
         cv2.circle(template, (crow, ccol), radius, (1, 1, 1), -1)
     else:
         cv2.circle(template, (crow, ccol), radius, 1, -1)
@@ -58,8 +58,8 @@ def circle_filter_low_f(fshift, radius_ratio):
     # 1 生成圆形过滤器, 圆内值0, 其他部分为1的过滤器, 过滤
     filter_img = np.ones(fshift.shape, np.uint8)
     crow, col = int(fshift.shape[0] / 2), int(fshift.shape[1] / 2)
-    radius = int(radius_ratio * img.shape[0] / 2)
-    if len(img.shape) == 3:
+    radius = int(radius_ratio * fshift.shape[0] / 2)
+    if len(fshift.shape) == 3:
         cv2.circle(filter_img, (crow, col), radius, (0, 0, 0), -1)
     else:
         cv2.circle(filter_img, (crow, col), radius, 0, -1)
@@ -111,9 +111,9 @@ def getFreTensor(img):
     r, g, b = img[0], img[1], img[2]
     gray_tensor = 0.299 * r + 0.587 * g + 0.114 * b
     # 将结果转换为 NumPy ndarray
-    gray_image = gray_tensor.numpy()
-    low_freq_part_img, high_freq_part_img = get_low_high_f(gray_image, radius_ratio=radius_ratio,
-                                                           D=D)  # multi channel or single
+    gray_image = gray_tensor.cpu().numpy()
+    low_freq_part_img, high_freq_part_img = get_low_high_f(gray_image, radius_ratio=0.5,
+                                                           D=50)  # multi channel or single
     transform_to = transforms.ToTensor()
     return transform_to(high_freq_part_img)
 
@@ -124,5 +124,8 @@ def grayToWeight(gray, scale = 2.0):
 
     # 扩展权重，使其与 RGB 图像的大小相匹配
     # 这里假设灰度图像是单通道的，我们需要将权重扩展为 (C, H, W) 形状
-    weight_expanded = weight.unsqueeze(0).expand_as(rgb_target)  # 将权重扩展到 (3, H, W)
-    return weight_expanded
+    #weight_expanded = weight.unsqueeze(0).expand_as(rgb_target)  # 将权重扩展到 (3, H, W)
+    return weight#weight_expanded
+
+def weight_l1_loss(network_output, gt, weight):
+    return torch.abs((network_output - gt)*weight).mean()

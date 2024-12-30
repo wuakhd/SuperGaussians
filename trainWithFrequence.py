@@ -28,6 +28,7 @@ import pynvml
 from PIL import Image
 #引入频率图计算
 import getFrequenceMap
+from getFrequenceMap import getFreTensor,grayToWeight,weight_l1_loss
 
 def convert_gray_to_cmap(img_gray, map_mode='jet', revert=False, vmax=None):
     img_gray = copy.deepcopy(img_gray)
@@ -95,13 +96,14 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         render_pkg["visibility_filter"], render_pkg["radii"]
 
         gt_image = viewpoint_cam.original_image.cuda()
-        Ll1 = l1_loss(image, gt_image)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
+        #Ll1 = l1_loss(image, gt_image)
+        #loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
         #修改了这里，添加了Loss权重
         grayImage = getFreTensor(gt_image)
-        weightsFromGray = grayToWeight(grayImage)
-        loss = loss*weightsFromGray
+        weightsFromGray = grayToWeight(grayImage).cuda()
+        Ll1 = weight_l1_loss(image, gt_image, weightsFromGray)
+        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
         # regularization
         lambda_normal = opt.lambda_normal if iteration > 7000 else 0.0
@@ -289,7 +291,7 @@ def training_report(tb_writer, iteration, Ll1, loss, l1_loss, elapsed, testing_i
 
 if __name__ == "__main__":
     pynvml.nvmlInit()
-    handle = pynvml.nvmlDeviceGetHandleByIndex(2)
+    handle = pynvml.nvmlDeviceGetHandleByIndex(0)
     # Set up command line argument parser
     parser = ArgumentParser(description="Training script parameters")
     lp = ModelParams(parser)
