@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import torch
 from torchvision import transforms
-
+import torch.nn.functional as F
 
 def gaussian_filter_high_f(fshift, D):
     # 获取索引矩阵及中心点坐标
@@ -141,12 +141,17 @@ def grayToWeight(gray, scale = 1.0):
     #weight_expanded = weight.unsqueeze(0).expand_as(rgb_target)  # 将权重扩展到 (3, H, W)
 
     # 应用 sigmoid 函数
-    tensor_sigmoid = torch.sigmoid(gray)
+    #tensor_sigmoid = torch.sigmoid(gray)
     # 将 sigmoid 输出映射到 [1, 2]
-    tensor_scaled = 4.33 * tensor_sigmoid - 0.165
+    #tensor_scaled = 4.33 * tensor_sigmoid - 0.165
 
+    normalized_weight = (gray - gray.min()) / (gray.max() - gray.min())
+    weight = normalized_weight * scale + 1
+
+    tensor_2d = tensor_scaled.squeeze(0)
     #扩张操作（一个高频点对其周围的像素也视为高频点）
-    tensor_scaled = get_local_maxima(tensor_scaled)
+    tensor_scaled = get_local_maxima(tensor_2d)
+    tensor_scaled = tensor_scaled.unsqueeze(0)
 
     return tensor_scaled
 

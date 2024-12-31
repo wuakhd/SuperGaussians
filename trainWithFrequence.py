@@ -111,7 +111,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         else:
             grayImage = getFreTensor(gt_image)
             weightsFromGray = grayToWeight(grayImage)
-            weight_cache[(tensor_key, tensor_device)] = weightsFromGray
+            weight_cache[(gt_image_key, gt_image_device)] = weightsFromGray
         #grayImage = getFreTensor(gt_image)
         #weightsFromGray = grayToWeight(grayImage).cuda()
         #Ll1 = weight_l1_loss(image, gt_image, weightsFromGray)
