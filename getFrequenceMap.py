@@ -117,15 +117,21 @@ def getFreTensor(img):
     transform_to = transforms.ToTensor()
     return transform_to(high_freq_part_img)
 
-def grayToWeight(gray, scale = 2.0):
-    # 计算灰度图的权重，并将其映射到 [0, 2] 范围内
-    normalized_weight = (gray - gray.min()) / (gray.max() - gray.min())  # 归一化到 [0, 1]
-    weight = normalized_weight * scale  # 缩放到 [0, 2] 范围
-
+def grayToWeight(gray, scale = 1.0):
+    # 计算灰度图的权重，并将其映射到 [1, 2] 范围内
+    #normalized_weight = (gray - gray.min()) / (gray.max() - gray.min())  # 归一化到 [0, 1]
+    #weight = normalized_weight * scale  # 缩放到 [1, 2] 范围
     # 扩展权重，使其与 RGB 图像的大小相匹配
     # 这里假设灰度图像是单通道的，我们需要将权重扩展为 (C, H, W) 形状
     #weight_expanded = weight.unsqueeze(0).expand_as(rgb_target)  # 将权重扩展到 (3, H, W)
-    return weight#weight_expanded
+
+    # 应用 sigmoid 函数
+    tensor_sigmoid = torch.sigmoid(gray)
+    # 将 sigmoid 输出映射到 [1, 2]
+    tensor_scaled = 1 + tensor_sigmoid * (2 - 1)
+    return tensor_scaled
+
+    #return weight#weight_expanded
 
 def weight_l1_loss(network_output, gt, weight):
     return torch.abs((network_output - gt)*weight).mean()

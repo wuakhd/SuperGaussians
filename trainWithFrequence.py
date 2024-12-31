@@ -100,9 +100,21 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         #loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
         #修改了这里，添加了Loss权重
-        grayImage = getFreTensor(gt_image)
-        weightsFromGray = grayToWeight(grayImage).cuda()
-        Ll1 = weight_l1_loss(image, gt_image, weightsFromGray)
+        # 存储（缓存）计算结果的字典
+        weight_cache = {}
+        # 将张量从GPU转移到CPU，并将其转换为唯一的字节流表示
+        gt_image_key = gt_image.cpu().data.numpy().tobytes()  # 先转到 CPU，再转换为字节流
+        gt_image_device = gt_image.device  # 记录设备信息
+        if (gt_image_key, gt_image_device) in weight_cache:
+            weightsFromGray = weight_cache[(gt_image_key, gt_image_device)]
+        else:
+            grayImage = getFreTensor(gt_image)
+            weightsFromGray = grayToWeight(grayImage)
+            weight_cache[(tensor_key, tensor_device)] = weightsFromGray
+        #grayImage = getFreTensor(gt_image)
+        #weightsFromGray = grayToWeight(grayImage).cuda()
+        #Ll1 = weight_l1_loss(image, gt_image, weightsFromGray)
+        Ll1 = weight_l1_loss(image, gt_image, weightsFromGray.cuda())
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
         # regularization
