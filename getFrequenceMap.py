@@ -117,6 +117,21 @@ def getFreTensor(img):
     transform_to = transforms.ToTensor()
     return transform_to(high_freq_part_img)
 
+#扩张操作，将3*3范围内的每个值都取其中最大，相当于扩大了视为高频像素点的个数
+#一个像素点高频，则周围一片区域也为高频
+def get_local_maxima(tensor, kernel_size=3, padding_value=0):
+    # 对张量进行边界填充，填充大小为 (kernel_size - 1) // 2
+    padding = (kernel_size // 2, kernel_size // 2, kernel_size // 2, kernel_size // 2)
+    padded_tensor = F.pad(tensor, padding, mode='constant', value=padding_value)
+    # 使用 unfold 提取每个 3x3 窗口
+    unfolded = padded_tensor.unfold(0, kernel_size, 1).unfold(1, kernel_size, 1)
+    # unfolded 的维度为 [height, width, kernel_size, kernel_size]
+    # unfolded 张量形状是 [行数, 列数, kernel_size, kernel_size]
+    # 计算每个局部窗口的最大值
+    max_values, _ = unfolded.max(dim=-1)  # 对每个窗口的每一列取最大值
+    max_values, _ = max_values.max(dim=-1)  # 对每个窗口的每一行取最大值
+    return max_values
+
 def grayToWeight(gray, scale = 1.0):
     # 计算灰度图的权重，并将其映射到 [1, 2] 范围内
     #normalized_weight = (gray - gray.min()) / (gray.max() - gray.min())  # 归一化到 [0, 1]
@@ -128,7 +143,11 @@ def grayToWeight(gray, scale = 1.0):
     # 应用 sigmoid 函数
     tensor_sigmoid = torch.sigmoid(gray)
     # 将 sigmoid 输出映射到 [1, 2]
-    tensor_scaled = 1 + tensor_sigmoid * (2 - 1)
+    tensor_scaled = 4.33 * tensor_sigmoid - 0.165
+
+    #扩张操作（一个高频点对其周围的像素也视为高频点）
+    tensor_scaled = get_local_maxima(tensor_scaled)
+
     return tensor_scaled
 
     #return weight#weight_expanded

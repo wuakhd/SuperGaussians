@@ -72,6 +72,9 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
     ema_dist_for_log = 0.0
     ema_normal_for_log = 0.0
 
+    #添加一个记录weight的字典
+    weight_cache = {}
+
     progress_bar = tqdm(range(first_iter, opt.iterations), desc="Training progress")
     first_iter += 1
     for iteration in range(first_iter, opt.iterations + 1):
@@ -100,8 +103,6 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         #loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
         #修改了这里，添加了Loss权重
-        # 存储（缓存）计算结果的字典
-        weight_cache = {}
         # 将张量从GPU转移到CPU，并将其转换为唯一的字节流表示
         gt_image_key = gt_image.cpu().data.numpy().tobytes()  # 先转到 CPU，再转换为字节流
         gt_image_device = gt_image.device  # 记录设备信息
@@ -114,6 +115,7 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
         #grayImage = getFreTensor(gt_image)
         #weightsFromGray = grayToWeight(grayImage).cuda()
         #Ll1 = weight_l1_loss(image, gt_image, weightsFromGray)
+        #感觉还是要考虑下原来的Loss
         Ll1 = weight_l1_loss(image, gt_image, weightsFromGray.cuda())
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
 
